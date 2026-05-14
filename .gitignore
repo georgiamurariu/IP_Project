@@ -1,0 +1,29 @@
+# CLion / JetBrains
+.idea/
+
+# CMake / build folders
+cmake-build-*/
+build/
+out/
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+compile_commands.json
+
+# Binaries
+Project_PI
+*.exe
+*.out
+*.app
+*.dSYM/
+
+# Generated project output
+data/output/frames/*
+data/output/depth_maps/*
+data/output/*.avi
+!data/output/frames/.gitkeep
+!data/output/depth_maps/.gitkeep
+
+# OS files
+.DS_Store
+
