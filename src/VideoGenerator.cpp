@@ -17,7 +17,7 @@ bool VideoGenerator::createVideoFromFrames(const string& framesFolder,
 
     for (int index = 0; index <= 999; index++)
     {
-        string framePath = ImageLoader::framePath(framesFolder, "anaglyph_depth", index);
+        string framePath = ImageLoader::framePath(framesFolder, "anaglyph", index);
 
         if (!ImageLoader::fileExists(framePath))
         {

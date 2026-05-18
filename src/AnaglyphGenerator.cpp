@@ -45,9 +45,10 @@ Mat AnaglyphGenerator::createAnaglyphWithDisparity(const Mat& leftImage,
             int shiftedX = x - shift;
 
             uchar rightPixel = 0;
-            if (shiftedX >= 0 && shiftedX < rightImage.cols)
+            if (shiftedX >= 0 && shiftedX < leftImage.cols)
             {
-                rightPixel = rightImage.at<uchar>(y, shiftedX);
+                // Sintetizam imaginea dreapta folosind imaginea stanga si depth map-ul
+                rightPixel = leftImage.at<uchar>(y, shiftedX);
             }
 
             Vec3b color;

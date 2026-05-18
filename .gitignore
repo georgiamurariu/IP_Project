@@ -18,9 +18,7 @@ Project_PI
 *.dSYM/
 
 # Generated project output
-data/output/frames/*
-data/output/depth_maps/*
-data/output/*.avi
+data/*
 !data/output/frames/.gitkeep
 !data/output/depth_maps/.gitkeep
 
