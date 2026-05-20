@@ -1,0 +1,108 @@
+% $ biblatex auxiliary file $
+% $ biblatex bbl format version 3.3 $
+% Do not modify the above lines!
+%
+% This is an auxiliary file used by the 'biblatex' package.
+% This file may safely be deleted. It will be recreated by
+% biber as required.
+%
+\begingroup
+\makeatletter
+\@ifundefined{ver@biblatex.sty}
+  {\@latex@error
+     {Missing 'biblatex' package}
+     {The bibliography requires the 'biblatex' package.}
+      \aftergroup\endinput}
+  {}
+\endgroup
+
+
+\refsection{0}
+  \datalist[entry]{none/global//global/global/global}
+    \entry{opencv_docs}{online}{}{}
+      \name{author}{1}{}{%
+        {{hash=43b55a0849301cb3d8b2a4f34fbec76d}{%
+           family={{OpenCV Documentation}},
+           familyi={O\bibinitperiod}}}%
+      }
+      \strng{namehash}{43b55a0849301cb3d8b2a4f34fbec76d}
+      \strng{fullhash}{43b55a0849301cb3d8b2a4f34fbec76d}
+      \strng{fullhashraw}{43b55a0849301cb3d8b2a4f34fbec76d}
+      \strng{bibnamehash}{43b55a0849301cb3d8b2a4f34fbec76d}
+      \strng{authorbibnamehash}{43b55a0849301cb3d8b2a4f34fbec76d}
+      \strng{authornamehash}{43b55a0849301cb3d8b2a4f34fbec76d}
+      \strng{authorfullhash}{43b55a0849301cb3d8b2a4f34fbec76d}
+      \strng{authorfullhashraw}{43b55a0849301cb3d8b2a4f34fbec76d}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{title}{Image file reading and writing}
+      \verb{urlraw}
+      \verb https://docs.opencv.org/4.x/d4/da8/group__imgcodecs.html
+      \endverb
+      \verb{url}
+      \verb https://docs.opencv.org/4.x/d4/da8/group__imgcodecs.html
+      \endverb
+    \endentry
+    \entry{scharstein2002taxonomy}{article}{}{}
+      \name{author}{2}{}{%
+        {{hash=b14ac2b508357476f1391a183a077ab3}{%
+           family={Scharstein},
+           familyi={S\bibinitperiod},
+           given={Daniel},
+           giveni={D\bibinitperiod}}}%
+        {{hash=f2e556c93256e7d70895d67702e14f1a}{%
+           family={Szeliski},
+           familyi={S\bibinitperiod},
+           given={Richard},
+           giveni={R\bibinitperiod}}}%
+      }
+      \strng{namehash}{bc399ebc50d55b700885fa232816ba92}
+      \strng{fullhash}{bc399ebc50d55b700885fa232816ba92}
+      \strng{fullhashraw}{bc399ebc50d55b700885fa232816ba92}
+      \strng{bibnamehash}{bc399ebc50d55b700885fa232816ba92}
+      \strng{authorbibnamehash}{bc399ebc50d55b700885fa232816ba92}
+      \strng{authornamehash}{bc399ebc50d55b700885fa232816ba92}
+      \strng{authorfullhash}{bc399ebc50d55b700885fa232816ba92}
+      \strng{authorfullhashraw}{bc399ebc50d55b700885fa232816ba92}
+      \field{sortinit}{2}
+      \field{sortinithash}{8b555b3791beccb63322c22f3320aa9a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{International journal of computer vision}
+      \field{number}{1}
+      \field{title}{A taxonomy and evaluation of dense two-frame stereo correspondence algorithms}
+      \field{volume}{47}
+      \field{year}{2002}
+      \field{pages}{7\bibrangedash 42}
+      \range{pages}{36}
+    \endentry
+    \entry{woods2012understanding}{inproceedings}{}{}
+      \name{author}{1}{}{%
+        {{hash=ce301c387cf64f9c9fc060257eff6911}{%
+           family={Woods},
+           familyi={W\bibinitperiod},
+           given={Andrew\bibnamedelima J},
+           giveni={A\bibinitperiod\bibinitdelim J\bibinitperiod}}}%
+      }
+      \strng{namehash}{ce301c387cf64f9c9fc060257eff6911}
+      \strng{fullhash}{ce301c387cf64f9c9fc060257eff6911}
+      \strng{fullhashraw}{ce301c387cf64f9c9fc060257eff6911}
+      \strng{bibnamehash}{ce301c387cf64f9c9fc060257eff6911}
+      \strng{authorbibnamehash}{ce301c387cf64f9c9fc060257eff6911}
+      \strng{authornamehash}{ce301c387cf64f9c9fc060257eff6911}
+      \strng{authorfullhash}{ce301c387cf64f9c9fc060257eff6911}
+      \strng{authorfullhashraw}{ce301c387cf64f9c9fc060257eff6911}
+      \field{sortinit}{3}
+      \field{sortinithash}{ad6fe7482ffbd7b9f99c9e8b5dccd3d7}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{booktitle}{Keynote presentation at 3DSA, Taiwan}
+      \field{title}{Understanding Crosstalk in Stereoscopic Displays}
+      \field{year}{2012}
+    \endentry
+  \enddatalist
+\endrefsection
+\endinput
+
