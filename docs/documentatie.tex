@@ -1,0 +1,350 @@
+\documentclass[12pt,a4paper]{report}
+
+% ----- ENCODING AND LANGUAGE -----
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[romanian,english]{babel}
+
+% ----- PAGE SETUP -----
+\usepackage{geometry}
+\geometry{margin=1in}
+\usepackage{setspace}
+\setstretch{1.3}
+
+% ----- GRAPHICS AND LINKS -----
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{hyperref}
+\usepackage{csquotes}
+\usepackage{caption}
+
+% ----- HEADER / FOOTER -----
+\usepackage{fancyhdr}
+\fancyhf{}
+\cfoot{\thepage} % page number in the center footer
+\pagestyle{fancy}
+
+% ----- TABLE OF CONTENTS STYLE -----
+\usepackage{tocloft}
+\renewcommand{\cftchapfont}{\bfseries} % bold chapter names
+\setlength{\cftbeforechapskip}{0.6em}  % space between chapter entries
+\usepackage{subcaption} % Add this in your preamble
+
+% ----- DIAGRAMS AND PLOTS -----
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta, positioning, shapes.geometric, backgrounds, calc}
+\tikzstyle{block} = [rectangle, draw, fill=blue!10, text width=9em, text centered, rounded corners, minimum height=3em]
+\tikzstyle{data} = [trapezium, trapezium left angle=70, trapezium right angle=110, draw, fill=green!10, text width=7em, text centered, minimum height=3em]
+\tikzstyle{line} = [draw, -stealth, thick]
+
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+
+% ----- BIBLIOGRAPHY -----
+\usepackage[backend=biber,style=numeric,sorting=none]{biblatex}
+\addbibresource{references.bib}
+
+% ----- LISTINGS (for code snippets) -----
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{amsmath}
+
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2
+}
+\lstset{style=mystyle}
+
+\cfoot{\thepage} % page number at bottom center
+
+\begin{document}
+
+\selectlanguage{romanian} % we use romanian for the content!
+
+\newgeometry{top=2cm, bottom=2.5cm, left=2.5cm, right=2.5cm}
+
+%title page
+\begin{titlepage}
+\centering
+% Puteti inlocui img/image.png cu sigla facultatii in folder
+% \includegraphics[height=3cm]{img/image.png}\\[0.1cm]
+{\Large \textbf{FACULTATEA DE AUTOMATICA SI}}\\[0.3cm]
+{\Large \textbf{CALCULATOARE}}\\[0.1cm]
+{\large \textbf{Departamentul de Calculatoare}}\\[4cm]
+
+{\Huge \textbf{Procesarea Imaginilor}}\\[0.7cm]
+{\Large \textbf{Crearea Filmelor 3D Anaglife prin Analiză Stereoscopică}}\\[6cm]
+
+\begin{flushright}
+\textbf{Studenți:} Ghineț Ioana-Teodora\\
+\textbf{} Murariu Georgiana\\
+\textbf{Anul:} III, CTI\\
+\textbf{Grupa:} 30434\\
+\end{flushright}
+
+\vfill
+\centering
+\textbf{Cluj-Napoca, 2025}
+\end{titlepage}
+
+\restoregeometry
+
+% ----- TABLE OF CONTENTS -----
+\clearpage
+\pagestyle{fancy}
+\tableofcontents
+\thispagestyle{fancy}
+\newpage
+
+%========================
+\chapter{Introducere și Context Teoretic}
+%========================
+
+\section{Cerința Proiectului}
+Proiectul își propune crearea de secvențe video 3D (filme anaglife) pornind de la date de intrare de tip stereo. Concret, sistemul primește o secvență iterativă de imagini pereche (captate de o cameră stângă și una dreaptă) în format \textit{grayscale} (tip BMP, 8 biți/pixel). Obiectivul central este dublu: 
+1. Obținerea unei aproximări cantitative a distanței fiecărui pixel prin calculul unei hărți de profunzime (\textit{depth map}) pe baza corespondenței stereo.
+2. Generarea estetică a imaginii anaglife prin combinarea canalelor de culoare, rezultând într-o iluzie optică 3D, vizualizabilă prin ochelari cu filtru roșu-cyan. Rezultatul va fi înlănțuit într-un container video de tip \texttt{.avi}.
+
+\section{Contextul Procesării Stereoscopice}
+Viziunea stereoscopică (sau \textit{stereovision}) reprezintă o ramură fundamentală a viziunii computerizate care încearcă să reproducă abilitatea sistemului vizual uman de a percepe profunzimea. Atunci când o scenă este observată din două puncte de perspectivă ușor diferite (camere deplasate pe axa orizontală de o distanță numită \textit{baseline}), proiecția unui obiect va apărea în poziții diferite pe cele două planuri de imagine. 
+
+Diferența de coordonate orizontale a aceluiași punct 3D proiectat în cele două imagini 2D poartă denumirea de \textbf{disparitate}. Geometria epipolară ne asigură că, dacă cele două camere sunt perfect paralele și aliniate (\textit{coplanare}), căutarea corespondenței unui pixel se face strict pe o singură linie orizontală, reducând drastic complexitatea calculului de la $O(N^2)$ la $O(N)$ pentru un bloc dat.
+
+Relația fundamentală dintre adâncime ($Z$) și disparitate ($d$) este dată de ecuația:
+\begin{equation}
+    Z = \frac{f \cdot B}{d}
+\end{equation}
+unde $f$ este distanța focală a lentilei, iar $B$ este distanța fizică (baseline-ul) dintre centrele optice ale camerelor. Deoarece $f$ și $B$ sunt constante, disparitatea $d$ este \textit{invers proporțională} cu distanța $Z$. Astfel, obiectele apropiate au o disparitate mare, iar obiectele aflate la infinit au o disparitate nulă.
+
+%========================
+\chapter{Arhitectura Sistemului și Pipeline-ul de Procesare}
+%========================
+
+Pentru a respecta bunele practici în ingineria software, arhitectura proiectului este implementată modular. Pipeline-ul de procesare al imaginilor transformă datele brute pas cu pas până la obținerea secvenței video.
+
+\section{Diagrama Arhitecturală a Pipeline-ului}
+Sistemul parcurge 5 faze secvențiale pentru fiecare cadru al bazei de date.
+
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}[node distance=2cm]
+        % Nodes
+        \node (input) [data] {Imagini Stereo (Raw .ppm / .jpg)};
+        \node (loader) [block, below of=input] {ImageLoader (Citire și validare grayscale)};
+        \node (disparity) [block, below of=loader] {DisparityMap (Optimizare SAD)};
+        \node (depth) [data, right of=disparity, node distance=5cm] {Depth Map Normalizat (Z-buffer)};
+        \node (anaglyph) [block, below of=disparity] {AnaglyphGenerator (Filtrare RGB)};
+        \node (video) [block, below of=anaglyph] {VideoGenerator (Asamblare Frame-uri)};
+        \node (output) [data, below of=video] {Secvență Video 3D (.avi)};
+
+        % Arrows
+        \path [line] (input) -- (loader);
+        \path [line] (loader) -- (disparity);
+        \path [line] (disparity) -- (depth);
+        \path [line] (disparity) -- (anaglyph);
+        \path [line] (anaglyph) -- (video);
+        \path [line] (video) -- (output);
+    \end{tikzpicture}
+    \caption{Fluxul de date și componentele software ale proiectului.}
+    \label{fig:pipeline_diagram}
+\end{figure}
+
+\section{Module Principale}
+\begin{enumerate}
+    \item \textbf{ImageLoader:} Iterativ, citește fișiere din directoarele brute. Validarea datelor se asigură utilizând \texttt{cv::imread} din biblioteca OpenCV, forțând citirea \texttt{IMREAD\_GRAYSCALE} pentru a garanta matrici pe un singur canal de 8-biți \cite{opencv_docs}. Modulul normalizează numele de fișiere pentru a rula indiferent de extensie.
+    \item \textbf{DisparityMap:} Modulul matematic principal în care se estimează deplasarea (disparitatea) pe baza metodelor de \textit{dense stereo matching}.
+    \item \textbf{AnaglyphGenerator:} Crearea sintetică a imaginii tridimensionale, mapând imaginea sursă și deplasările pe canalele de culoare independente.
+    \item \textbf{VideoGenerator:} Clasă de tip singleton sau utilitar care populează un container video prin intermediul clasei \texttt{cv::VideoWriter}. S-a optat pentru codecul MJPG (Motion JPEG) și un frame rate (FPS) adaptat ritmului cadrelor procesate.
+\end{enumerate}
+
+
+%========================
+\chapter{Modele Matematice și Implementare}
+%========================
+
+\section{Calculul Hărții de Disparitate prin SAD}
+Cea mai complexă problemă din stereoviziune este \textit{Stereo Correspondence Problem} (problema corespondenței). Soluția implementată se bazează pe evaluarea blocului (Block Matching) folosind metrica \textbf{Sum of Absolute Differences (SAD)}, renumită pentru eficiența sa hardware și software comparativ cu SSD (Sum of Squared Differences) sau NCC (Normalized Cross-Correlation) \cite{scharstein2002taxonomy}.
+
+Principiul constă în centrarea unei ferestre de vecinătate (un \textit{window} $W \times W$) pe un pixel de coordonate $(x,y)$ în imaginea de referință (stânga). Apoi, o fereastră similară glisează de-a lungul axei orizontale în imaginea secundară (dreapta), calculând o eroare sau un „cost” pentru fiecare valoare posibilă a disparității $d \in [0, d_{max}]$.
+
+Costul SAD este dat de formula analitică:
+\begin{equation}
+    SAD(x, y, d) = \sum_{j=-R}^{R} \sum_{i=-R}^{R} \left| I_L(x+i, y+j) - I_R(x+i-d, y+j) \right|
+\end{equation}
+unde:
+\begin{itemize}
+    \item $R = \lfloor W/2 \rfloor$ reprezintă raza de căutare a ferestrei.
+    \item $I_L(u,v)$ și $I_R(u,v)$ sunt intensitățile pixelilor (valori $0-255$) în imaginile din stânga, respectiv dreapta.
+\end{itemize}
+
+Algoritmul alege pentru fiecare pixel acea disparitate $d^*$ care minimizează costul:
+\begin{equation}
+    d^*(x,y) = \arg\min_{d} SAD(x, y, d)
+\end{equation}
+
+Această matrice brută a disparităților este ulterior supusă unui proces de normalizare liniară în intervalul de afișare $[0, 255]$ pentru a putea fi salvată ca fișier bitmap (depth map vizual). Formula de scalare folosită este:
+\begin{equation}
+    P_{norm} = \frac{d^*(x,y) - d_{min}}{d_{max} - d_{min}} \times 255
+\end{equation}
+
+\section{Generarea Efectului Anaglif Roșu-Cyan}
+Stereoscopia anaglifă se bazează pe filtrarea cromatică a spectrului de lumină pentru a direcționa informații distincte către fiecare ochi \cite{woods2012understanding}. Canalul roșu filtrează datele destinate ochiului stâng, iar canalele verde-albastru (cyan) le filtrează pe cele pentru ochiul drept.
+
+La nivel software, imaginea finală `CV\_8UC3` (matrice cu 3 canale RGB) se creează astfel:
+\begin{align*}
+    C_{R}(x, y) &= I_{L\_gray}(x, y) \\
+    C_{G}(x, y) &= I_{R\_gray}(x, y) \\
+    C_{B}(x, y) &= I_{R\_gray}(x, y)
+\end{align*}
+Prin fuzionarea imaginilor cu disparitate inerentă, paralaxa devine vizibilă. Pentru a evita un efect neplăcut de \textit{ghosting} (crosstalk), este imperativ ca matricile să rămână sincronizate la nivel de pixel.
+
+%========================
+\chapter{Analiza Performanței și Rezultate}
+%========================
+
+\section{Detalii Tehnice și Baza de Date}
+Sistemul a fost realizat în limbajul \textbf{C++}, beneficiind de viteza execuției codului nativ. Structurile de date și funcțiile I/O provin din OpenCV 4.
+
+Pentru validarea riguroasă a rezultatelor, sistemul a fost testat pe baze de date recunoscute la nivel academic.
+\begin{itemize}
+    \item \textbf{Dataset-ul „Cones” (Middlebury 2003):} Conține o machetă statică cu obiecte cu geometrii clare și texturi bogate (jaloane). S-a simulat o mișcare de tip pan cu \textit{baseline} constant prin extragerea imaginilor paralele din array-ul camerei, generând o mini-secvență de 7 cadre care evaluează precizia la distanțe apropiate.
+    \item \textbf{Dataset-ul „Boats”:} O secvență fluidă masivă conținând 99 de cadre temporale. Acest volum de date demonstrează capacitatea de scalare și fiabilitatea implementării software pe execuții de lungă durată (procesare de tip \textit{batch}).
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}
+        \begin{axis}[
+            ybar,
+            symbolic x coords={Cones (Middlebury), Boats (Batch Sequence)},
+            xtick=data,
+            nodes near coords,
+            nodes near coords align={vertical},
+            ymin=0, ymax=120,
+            ylabel={Număr total de cadre generate},
+            xlabel={Baza de date},
+            title={Volumul de cadre video generat per dataset},
+            bar width=2.5cm,
+            enlarge x limits=0.5
+        ]
+        \addplot[fill=cyan!40] coordinates {(Cones (Middlebury),7) (Boats (Batch Sequence),99)};
+        \end{axis}
+    \end{tikzpicture}
+    \caption{Evaluarea cantitativă a procesării automate efectuate de \texttt{ImageLoader}.}
+    \label{fig:dataset_graph}
+\end{figure}
+
+\section{Analiza Complexității}
+Timpul de execuție al algoritmului \textit{SAD Block Matching} de tip forță-brută implementat constituie piesa centrală a duratei de procesare. 
+Complexitatea timp este $\mathcal{O}(W^2 \cdot D \cdot N)$, unde:
+\begin{itemize}
+    \item $W$ este lățimea ferestrei de vecinătate (ex: $15 \times 15$ pixeli).
+    \item $D$ este plaja maximă a disparității explorate.
+    \item $N$ este numărul total de pixeli al imaginii ($L \times H$).
+\end{itemize}
+Procesarea manuală pe CPU (fără paralelizare) a celor 99 de perechi (Boats) durează câteva minute, un rezultat considerat extrem de eficient pentru o implementare educațională monolitică.
+
+\section{Metrice și Rezultate Vizuale}
+Generarea hartelor de adâncime este corectă și robustă pe texturi puternice. Efectul de adâncime produs în \textit{anaglyph\_video.avi} simulează impecabil tranziția prin axa Z atunci când materialul este vizualizat cu filtre speciale.
+
+
+%========================
+\chapter{Concluzii, Contribuții și Dezvoltări Ulterioare}
+%========================
+
+\section{Contribuțiile Membrilor Echipei}
+Abordarea acestui proiect a implicat o diviziune echitabilă și colaborativă a responsabilităților, folosind un sistem de control al versiunilor.
+\begin{itemize}
+    \item \textbf{Ghineț Ioana-Teodora:} S-a ocupat de arhitectura modulară și componenta de asamblare I/O. A implementat clasele \texttt{ImageLoader} (gestiunea memoriei și formatelor .ppm, .jpg, .bmp) și \texttt{VideoGenerator} pentru encodarea dinamică a fișierului AVI. Mai mult, a conceput scriptul \texttt{AnaglyphGenerator} care asigură fuziunea sub-pixelilor RGB corectă pentru iluzia tridimensională.
+    \item \textbf{Murariu Georgiana:} A asumat dezvoltarea nucleului matematic al proiectului: algoritmul \texttt{DisparityMap}. A implementat funcția de cost SAD cu evaluare pixel-by-pixel integrând corect condițiile de frontieră (pentru ferestrele marginale). Totodată, s-a ocupat de funcția de normalizare în histogramă (255 bins) și a scris detaliile arhitecturale și ecuațiile pentru prezenta documentație.
+\end{itemize}
+
+\section{Perspective și Dezvoltări Ulterioare}
+În vederea transformării acestui modul într-un sistem capabil de procesare \textit{Real-Time}, se propun următoarele direcții de modernizare:
+\begin{enumerate}
+    \item \textbf{Paralelizarea Multi-core / GPU:} Având în vedere natura algoritmului \textit{Block Matching} (fiecare pixel este calculat independent), operațiunea poate fi accelerată algoritmic folosind instrucțiuni vectoriale SIMD sau arhitectura \textbf{CUDA / OpenCL}.
+    \item \textbf{Tratarea Zgomotului prin SGM (Semi-Global Matching):} Deși funcția de cost SAD identifică disparitatea, pe zonele lipsite de textură (ex: cer senin) poate eșua în fața minimelor locale. Un algoritm de optimizare globală, precum \textit{SGM (Semi-Global Matching)} dezvoltat de Hirschmuller sau tehnici de \textit{Graph Cuts}, ar duce la o hartă mult mai netedă și precisă.
+    \item \textbf{Interfață Grafică Interactivă (GUI):} Trecerea de la linia de comandă (CLI) la un mediu vizual folosind framework-ul Qt.
+\end{enumerate}
+
+\printbibliography[title={Referințe Bibliografice}]
+
+\appendix
+\chapter{Anexe: Snippet-uri de Cod Esențiale}
+
+\textbf{Calculul Hărții de Disparitate (Optimizarea matematică SAD)}
+\begin{lstlisting}[language=C++]
+// Iterare exclusiv pe zona sigura (marginile sunt evitate pentru out-of-bounds)
+for (int y = radius; y < left.rows - radius; y++) {
+    for (int x = radius; x < left.cols - radius; x++) {
+        int bestDisparity = 0;
+        int bestCost = INT_MAX;
+
+        // Cautare lina in intervalul de disparitate maxim acceptat
+        for (int d = 0; d <= maxDisparity; d++) {
+            if (x - d - radius < 0) continue;
+            int cost = 0;
+            
+            // Calculul costului SAD absolut pentru fereastra centrala de dimensiune WxW
+            for (int wy = -radius; wy <= radius; wy++) {
+                for (int wx = -radius; wx <= radius; wx++) {
+                    int leftValue = left.at<uchar>(y + wy, x + wx);
+                    int rightValue = right.at<uchar>(y + wy, x + wx - d);
+                    cost += std::abs(leftValue - rightValue);
+                }
+            }
+            // Retinerea disparitatii cu costul cel mai mic (cea mai buna potrivire)
+            if (cost < bestCost) {
+                bestCost = cost;
+                bestDisparity = d;
+            }
+        }
+        disparity.at<uchar>(y, x) = static_cast<uchar>(bestDisparity);
+    }
+}
+\end{lstlisting}
+
+\vspace{10mm}
+
+\textbf{Generarea Cadrului Anaglif (Sinteză RGB la Nivel de Sub-Pixel)}
+\begin{lstlisting}[language=C++]
+// Initializarea unui cadru cu 3 canale (Blue, Green, Red)
+Mat anaglyph(leftImage.rows, leftImage.cols, CV_8UC3);
+
+for (int y = 0; y < leftImage.rows; y++) {
+    for (int x = 0; x < leftImage.cols; x++) {
+        // Preluarea intensitatii luminoase din cadrele sursa
+        uchar leftPixel = leftImage.at<uchar>(y, x);
+        uchar rightPixel = rightImage.at<uchar>(y, x);
+
+        Vec3b color;
+        // Maparea canalelor de culoare pe specificatiile filtrului Rosu-Cyan
+        color[0] = rightPixel; // Canalul Albastru (Blue) mapat pentru ochiul drept
+        color[1] = rightPixel; // Canalul Verde (Green) mapat pentru ochiul drept
+        color[2] = leftPixel;  // Canalul Rosu (Red) mapat pentru ochiul stang
+
+        anaglyph.at<Vec3b>(y, x) = color;
+    }
+}
+\end{lstlisting}
+
+\end{document}
