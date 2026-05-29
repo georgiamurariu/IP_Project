@@ -1,0 +1,1040 @@
+\begin{filecontents*}{references.bib}
+@misc{opencv_docs,
+  title        = {OpenCV Documentation: Image file reading and writing},
+  howpublished = {\url{https://docs.opencv.org/4.x/d4/da8/group__imgcodecs.html}},
+  note         = {Accessed: 2025}
+}
+
+@article{scharstein2002taxonomy,
+  author  = {Scharstein, Daniel and Szeliski, Richard},
+  title   = {A taxonomy and evaluation of dense two-frame stereo correspondence algorithms},
+  journal = {International Journal of Computer Vision},
+  volume  = {47},
+  number  = {1},
+  pages   = {7--42},
+  year    = {2002}
+}
+
+@misc{woods2012understanding,
+  author       = {Woods, Andrew J.},
+  title        = {Understanding Crosstalk in Stereoscopic Displays},
+  howpublished = {Keynote presentation at 3DSA, Taiwan},
+  year         = {2012}
+}
+\end{filecontents*}
+
+\documentclass[12pt,a4paper]{report}
+
+% ----- ENCODING AND LANGUAGE -----
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[utf8]{inputenc}
+  \usepackage[T1]{fontenc}
+\else
+  \usepackage{fontspec}
+  \setmainfont{lmroman12-regular.otf}[
+    BoldFont = lmroman12-bold.otf,
+    ItalicFont = lmroman12-italic.otf
+  ]
+\fi
+\usepackage[romanian,english]{babel}
+
+% ----- PAGE SETUP -----
+\usepackage{geometry}
+\geometry{margin=1in}
+\usepackage{setspace}
+\setstretch{1.3}
+
+% ----- GRAPHICS AND LINKS -----
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{hyperref}
+\usepackage{csquotes}
+\usepackage{caption}
+\usepackage{subcaption}
+
+% ----- HEADER / FOOTER -----
+\usepackage{fancyhdr}
+\fancyhf{}
+\cfoot{\thepage}
+\pagestyle{fancy}
+
+% ----- TABLE OF CONTENTS STYLE -----
+\usepackage{tocloft}
+\renewcommand{\cftchapfont}{\bfseries}
+\setlength{\cftbeforechapskip}{0.6em}
+
+% ----- DIAGRAMS AND PLOTS -----
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta, positioning, shapes.geometric, backgrounds, calc}
+\tikzstyle{block} = [rectangle, draw, fill=blue!10, text width=9em, text centered, rounded corners, minimum height=3em]
+\tikzstyle{data} = [trapezium, trapezium left angle=70, trapezium right angle=110, draw, fill=green!10, text width=7em, text centered, minimum height=3em]
+\tikzstyle{line} = [draw, -stealth, thick]
+
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+
+% ----- TABLES -----
+\usepackage{booktabs}
+\usepackage{array}
+
+% ----- BIBLIOGRAPHY -----
+\usepackage[backend=bibtex,style=numeric,sorting=none]{biblatex}
+\addbibresource{references.bib}
+
+% ----- LISTINGS -----
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{amsmath}
+
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,
+    breaklines=true,
+    captionpos=b,
+    keepspaces=true,
+    numbers=left,
+    numbersep=5pt,
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    tabsize=2,
+    literate=
+      {ă}{{\u a}}1 {Ă}{{\u A}}1
+      {â}{{\^a}}1 {Â}{{\^A}}1
+      {î}{{\^i}}1 {Î}{{\^I}}1
+      {ș}{{s}}1 {Ș}{{S}}1
+      {ţ}{{t}}1 {Ţ}{{T}}1
+      {ț}{{t}}1 {Ț}{{T}}1
+}
+\lstset{style=mystyle}
+
+\begin{document}
+
+\selectlanguage{romanian}
+
+\newgeometry{top=2cm, bottom=2.5cm, left=2.5cm, right=2.5cm}
+
+% title page
+\begin{titlepage}
+\centering
+
+{\Large \textbf{FACULTATEA DE AUTOMATICĂ ȘI}}\\[0.3cm]
+{\Large \textbf{CALCULATOARE}}\\[0.1cm]
+{\large \textbf{Departamentul de Calculatoare}}\\[4cm]
+
+{\Huge \textbf{Procesarea Imaginilor}}\\[0.7cm]
+{\Large \textbf{Crearea Filmelor 3D Anaglife prin Analiză Stereoscopică}}\\[6cm]
+
+\begin{flushright}
+\textbf{Studenți:} Ghineț Ioana-Teodora\\
+\textbf{} Murariu Georgiana\\
+\textbf{Anul:} III, CTI\\
+\textbf{Grupa:} 30434\\
+\end{flushright}
+
+\vfill
+\centering
+\textbf{Cluj-Napoca, 2025}
+\end{titlepage}
+
+\restoregeometry
+
+% ----- TABLE OF CONTENTS -----
+\clearpage
+\pagestyle{fancy}
+\tableofcontents
+\thispagestyle{fancy}
+\newpage
+
+%========================
+\chapter{Introducere și Context Teoretic}
+%========================
+
+\section{Cerința Proiectului}
+
+Proiectul are ca scop crearea unor secvențe video 3D anaglife pornind de la perechi de imagini stereo. Pentru fiecare cadru există două imagini: una corespunzătoare perspectivei din stânga și una corespunzătoare perspectivei din dreapta. Aceste imagini sunt prelucrate pentru a genera atât hărți de disparitate, cât și cadre anaglife care pot fi apoi combinate într-un fișier video de tip \texttt{.avi}.
+
+Aplicația primește ca intrare imagini grayscale pe 8 biți/pixel, în format BMP, organizate în două directoare separate: unul pentru imaginile din stânga și unul pentru imaginile din dreapta. Pentru fiecare pereche stereo, sistemul generează:
+
+\begin{itemize}
+    \item o hartă de disparitate / depth map;
+    \item un cadru anaglif simplu;
+    \item opțional, un cadru anaglif în care deplasarea este influențată de harta de disparitate;
+    \item o secvență video finală în format \texttt{anaglyph\_video.avi}.
+\end{itemize}
+
+Obiectivul principal al proiectului este dublu. Pe de o parte, se urmărește estimarea diferenței de poziție dintre aceleași puncte observate în cele două imagini stereo. Pe de altă parte, se urmărește generarea unei imagini color speciale, de tip roșu-cyan, care poate crea iluzia de profunzime atunci când este vizualizată cu ochelari anaglifi.
+
+\section{Contextul Procesării Stereoscopice}
+
+Viziunea stereoscopică reprezintă o ramură importantă a procesării imaginilor și a viziunii computerizate. Aceasta încearcă să reproducă modul în care sistemul vizual uman percepe adâncimea. Omul are doi ochi aflați la o anumită distanță unul față de celălalt, iar fiecare ochi observă scena dintr-o perspectivă ușor diferită. Creierul folosește diferențele dintre cele două imagini pentru a deduce poziția obiectelor în spațiu.
+
+În mod similar, într-un sistem stereo artificial, două camere sunt plasate la o anumită distanță una de cealaltă, numită \textit{baseline}. Un punct 3D din scenă se proiectează în poziții diferite în imaginea stângă și în imaginea dreaptă. Diferența dintre coordonatele orizontale ale aceluiași punct poartă numele de \textbf{disparitate}.
+
+În cazul ideal, camerele sunt aliniate orizontal și imaginile sunt rectificate. Astfel, căutarea punctului corespondent se poate face pe aceeași linie, doar pe direcția orizontală. Această presupunere simplifică foarte mult calculul, deoarece nu mai este nevoie să se caute corespondentul într-o zonă bidimensională, ci doar de-a lungul unei linii.
+
+Relația teoretică dintre adâncime și disparitate este:
+
+\begin{equation}
+    Z = \frac{f \cdot B}{d}
+\end{equation}
+
+unde:
+\begin{itemize}
+    \item $Z$ este distanța până la punctul observat;
+    \item $f$ este distanța focală a camerei;
+    \item $B$ este distanța dintre cele două camere;
+    \item $d$ este disparitatea.
+\end{itemize}
+
+Din această relație se observă că adâncimea este invers proporțională cu disparitatea. Obiectele mai apropiate au o disparitate mai mare, iar obiectele îndepărtate au o disparitate mai mică.
+
+\section{Imaginea Anaglifă}
+
+O imagine anaglifă este o imagine color obținută prin combinarea a două perspective stereo într-un singur cadru. În varianta roșu-cyan, informația pentru ochiul stâng este introdusă în canalul roșu, iar informația pentru ochiul drept este introdusă în canalele verde și albastru. Atunci când imaginea este privită prin ochelari anaglifi, fiecare ochi primește o informație diferită, iar creierul interpretează diferența ca efect de adâncime.
+
+În proiectul de față, imaginile inițiale sunt grayscale. Din acest motiv, fiecare pixel are o singură valoare de intensitate. Pentru a crea imaginea anaglifă, această valoare este copiată în canalele de culoare corespunzătoare.
+
+%========================
+\chapter{Structura Proiectului și Tehnologii Folosite}
+%========================
+
+\section{Structura Directoarelor}
+
+Proiectul este organizat modular, folosind fișiere separate pentru fiecare responsabilitate importantă. Structura generală este următoarea:
+
+\begin{lstlisting}[language=bash]
+Project_PI/
+|-- CMakeLists.txt
+|-- README.md
+|-- .gitignore
+|-- src/
+|   |-- main.cpp
+|   |-- ImageLoader.cpp
+|   |-- ImageLoader.h
+|   |-- AnaglyphGenerator.cpp
+|   |-- AnaglyphGenerator.h
+|   |-- DisparityMap.cpp
+|   |-- DisparityMap.h
+|   |-- VideoGenerator.cpp
+|   |-- VideoGenerator.h
+|-- data/
+|   |-- raw/
+|   |-- left/
+|   |-- right/
+|   |-- output/
+|       |-- frames/
+|       |-- depth_maps/
+|       |-- anaglyph_video.avi
+|-- docs/
+|   |-- screenshots/
+\end{lstlisting}
+
+Directorul \texttt{src} conține codul sursă al aplicației. Directorul \texttt{data} conține datele de intrare și rezultatele generate. În \texttt{data/left} se află imaginile pentru camera stângă, iar în \texttt{data/right} imaginile pentru camera dreaptă. Rezultatele se salvează în \texttt{data/output}.
+
+\section{Tehnologii Folosite}
+
+Proiectul a fost realizat folosind următoarele tehnologii:
+
+\begin{itemize}
+    \item \textbf{C++17} -- limbajul principal de implementare;
+    \item \textbf{OpenCV} -- bibliotecă folosită pentru citirea, scrierea, afișarea și procesarea imaginilor;
+    \item \textbf{CMake} -- sistem de build folosit pentru configurarea proiectului;
+    \item \textbf{CLion} -- mediu de dezvoltare folosit pentru rularea și testarea aplicației;
+    \item \textbf{BMP grayscale 8 biți/pixel} -- formatul principal al imaginilor de intrare;
+    \item \textbf{AVI + MJPG} -- formatul și codecul folosite pentru video-ul final.
+\end{itemize}
+
+Fișierul \texttt{CMakeLists.txt} configurează proiectul, setează standardul C++17, caută instalarea OpenCV și leagă bibliotecile necesare. De asemenea, definește macro-ul \texttt{PROJECT\_ROOT}, folosit în cod pentru a construi căi absolute către directoarele proiectului.
+
+\section{Meniul Aplicației}
+
+Aplicația rulează în consolă și oferă un meniu interactiv. Opțiunile disponibile sunt:
+
+\begin{lstlisting}[language=bash]
+===== Project_PI - 3D Anaglyph Video =====
+1 - Test OpenCV
+2 - Convert raw datasets to BMP grayscale
+3 - Generate simple anaglyph
+4 - Generate disparity/depth map
+5 - Generate anaglyph using depth map
+6 - Process full stereo sequence
+7 - Generate final video
+0 - Exit
+\end{lstlisting}
+
+Fiecare opțiune apelează o funcție diferită din aplicație:
+
+\begin{itemize}
+    \item opțiunea 1 verifică dacă OpenCV este configurat corect;
+    \item opțiunea 2 convertește dataset-uri brute în imagini BMP grayscale;
+    \item opțiunea 3 generează un anaglif simplu pentru prima pereche stereo;
+    \item opțiunea 4 generează harta de disparitate pentru prima pereche stereo;
+    \item opțiunea 5 generează un anaglif folosind depth map-ul calculat;
+    \item opțiunea 6 procesează întreaga secvență stereo;
+    \item opțiunea 7 generează video-ul final din cadrele anaglife.
+\end{itemize}
+
+%========================
+\chapter{Arhitectura Sistemului și Pipeline-ul de Procesare}
+%========================
+
+\section{Descriere Generală}
+
+Pentru a păstra proiectul clar și ușor de extins, aplicația este împărțită în mai multe module. Fiecare modul are o responsabilitate bine definită. Astfel, logica de citire a imaginilor este separată de logica de calcul a disparității, de generarea imaginilor anaglife și de construirea fișierului video.
+
+Această organizare reduce complexitatea codului și permite testarea separată a fiecărei componente.
+
+\section{Diagrama Pipeline-ului}
+
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}[node distance=2cm]
+        \node (raw) [data] {Dataset brut};
+        \node (convert) [block, below of=raw] {Conversie în BMP grayscale};
+        \node (stereo) [data, below of=convert] {Perechi stereo left/right};
+        \node (loader) [block, below of=stereo] {ImageLoader};
+        \node (disparity) [block, below of=loader] {DisparityMap};
+        \node (depth) [data, right of=disparity, node distance=5cm] {Depth map};
+        \node (anaglyph) [block, below of=disparity] {AnaglyphGenerator};
+        \node (frames) [data, below of=anaglyph] {Cadre anaglife};
+        \node (video) [block, below of=frames] {VideoGenerator};
+        \node (output) [data, below of=video] {Video final AVI};
+
+        \path [line] (raw) -- (convert);
+        \path [line] (convert) -- (stereo);
+        \path [line] (stereo) -- (loader);
+        \path [line] (loader) -- (disparity);
+        \path [line] (disparity) -- (depth);
+        \path [line] (disparity) -- (anaglyph);
+        \path [line] (anaglyph) -- (frames);
+        \path [line] (frames) -- (video);
+        \path [line] (video) -- (output);
+    \end{tikzpicture}
+    \caption{Pipeline-ul general al aplicației.}
+    \label{fig:pipeline_diagram}
+\end{figure}
+
+\section{Module Principale}
+
+\subsection{ImageLoader}
+
+Clasa \texttt{ImageLoader} se ocupă de operațiile de bază legate de fișiere și imagini. Aceasta verifică existența fișierelor, încarcă imagini grayscale, validează tipul imaginilor și construiește căile pentru cadre numerotate.
+
+Funcțiile importante sunt:
+
+\begin{itemize}
+    \item \texttt{fileExists} -- verifică dacă un fișier există;
+    \item \texttt{loadGrayscaleImage} -- încarcă o imagine și verifică dacă este de tip \texttt{CV\_8UC1};
+    \item \texttt{loadStereoPair} -- încarcă o pereche stereo și verifică dacă imaginile au aceeași dimensiune;
+    \item \texttt{framePath} -- construiește calea unui fișier de forma \texttt{prefix\_000.bmp};
+    \item \texttt{findAvailableFrameIndices} -- caută perechile stereo disponibile.
+\end{itemize}
+
+\subsection{DisparityMap}
+
+Clasa \texttt{DisparityMap} conține partea matematică principală a proiectului. Aceasta calculează harta de disparitate folosind algoritmul SAD, apoi normalizează rezultatul în intervalul 0--255 pentru a putea fi salvat ca imagine grayscale.
+
+Cele mai importante funcții sunt:
+
+\begin{itemize}
+    \item \texttt{computeDisparityMap} -- calculează disparitatea brută;
+    \item \texttt{normalizeDisparityMap} -- normalizează valorile disparității;
+    \item \texttt{generateDisparityMapFromFiles} -- generează depth map pentru prima pereche stereo;
+    \item \texttt{computeSAD} -- variantă separată pentru calculul SAD;
+    \item \texttt{normalizeToGrayscale} -- normalizează o hartă brută în funcție de disparitatea maximă.
+\end{itemize}
+
+\subsection{AnaglyphGenerator}
+
+Clasa \texttt{AnaglyphGenerator} generează imaginile anaglife. Există două variante:
+
+\begin{itemize}
+    \item \texttt{createSimpleAnaglyph} -- combină direct imaginea stângă și imaginea dreaptă;
+    \item \texttt{createAnaglyphWithDisparity} -- folosește depth map-ul pentru a deplasa pixelii și a accentua efectul 3D.
+\end{itemize}
+
+În OpenCV, ordinea canalelor este BGR, nu RGB. De aceea, canalul roșu este \texttt{color[2]}, canalul verde este \texttt{color[1]}, iar canalul albastru este \texttt{color[0]}.
+
+\subsection{VideoGenerator}
+
+Clasa \texttt{VideoGenerator} construiește video-ul final din cadrele anaglife generate anterior. Aceasta citește cadrele din \texttt{data/output/frames}, le verifică dimensiunea și le scrie într-un fișier video folosind \texttt{cv::VideoWriter}.
+
+Pentru video se folosește codecul MJPG:
+
+\begin{lstlisting}[language=C++]
+VideoWriter::fourcc('M', 'J', 'P', 'G')
+\end{lstlisting}
+
+%========================
+\chapter{Modele Matematice și Implementare}
+%========================
+
+\section{Calculul Hărții de Disparitate prin SAD}
+
+Cea mai importantă parte a proiectului este calculul hărții de disparitate. Pentru fiecare pixel din imaginea stângă se caută un pixel corespondent în imaginea dreaptă. Deoarece imaginile sunt considerate aliniate, căutarea se face doar pe orizontală.
+
+Pentru fiecare valoare posibilă a disparității $d$, se compară o fereastră din imaginea stângă cu o fereastră deplasată din imaginea dreaptă. Metrica folosită este \textbf{SAD}, adică \textit{Sum of Absolute Differences} \cite{scharstein2002taxonomy}.
+
+Formula folosită este:
+
+\begin{equation}
+    SAD(x, y, d) =
+    \sum_{j=-R}^{R}
+    \sum_{i=-R}^{R}
+    \left|
+    I_L(x+i, y+j) - I_R(x+i-d, y+j)
+    \right|
+\end{equation}
+
+unde:
+\begin{itemize}
+    \item $I_L$ este imaginea stângă;
+    \item $I_R$ este imaginea dreaptă;
+    \item $W$ este dimensiunea ferestrei;
+    \item $R = \lfloor W/2 \rfloor$ este raza ferestrei;
+    \item $d$ este disparitatea testată.
+\end{itemize}
+
+Pentru fiecare pixel se reține disparitatea cu cel mai mic cost:
+
+\begin{equation}
+    d^*(x,y) = \arg\min_d SAD(x,y,d)
+\end{equation}
+
+În implementare, valorile folosite sunt:
+
+\begin{itemize}
+    \item \texttt{maxDisparity = 64};
+    \item \texttt{windowSize = 7}.
+\end{itemize}
+
+\section{Normalizarea Depth Map-ului}
+
+Rezultatul brut al disparității conține valori într-un interval care depinde de imagine și de parametrul \texttt{maxDisparity}. Pentru a putea vizualiza rezultatul ca imagine grayscale, valorile sunt scalate în intervalul 0--255.
+
+Formula generală de normalizare este:
+
+\begin{equation}
+    P_{norm} =
+    \frac{P - P_{min}}{P_{max} - P_{min}} \cdot 255
+\end{equation}
+
+Dacă valoarea maximă este egală cu valoarea minimă, imaginea normalizată rămâne neagră, deoarece nu există variație de disparitate.
+
+\section{Generarea Anaglifului Simplu}
+
+Pentru generarea anaglifului simplu, se parcurg pixelii celor două imagini grayscale. Imaginea finală este o matrice cu trei canale de tip \texttt{CV\_8UC3}. Pentru fiecare pixel:
+
+\begin{align*}
+    B(x,y) &= I_R(x,y) \\
+    G(x,y) &= I_R(x,y) \\
+    R(x,y) &= I_L(x,y)
+\end{align*}
+
+Astfel, imaginea stângă este introdusă în canalul roșu, iar imaginea dreaptă în canalele verde și albastru. Rezultatul este o imagine anaglifă roșu-cyan \cite{woods2012understanding}.
+
+\section{Generarea Anaglifului cu Depth Map}
+
+În varianta cu depth map, harta de disparitate este folosită pentru a calcula o deplasare orizontală. Valoarea depth map-ului este normalizată între 0 și 255, iar în cod este transformată într-o deplasare maximă de 16 pixeli:
+
+\begin{equation}
+    shift = \frac{depthValue \cdot maxShift}{255}
+\end{equation}
+
+unde \texttt{maxShift = 16}. Pixelul folosit pentru canalele verde și albastru este preluat dintr-o poziție deplasată:
+
+\begin{equation}
+    shiftedX = x - shift
+\end{equation}
+
+Această metodă accentuează efectul de paralaxă și face ca imaginea finală să aibă un efect 3D mai vizibil.
+
+%========================
+\chapter{Fluxul de Rulare al Aplicației}
+%========================
+
+\section{Pregătirea Datelor}
+
+Pentru rularea aplicației, imaginile trebuie să fie organizate în două foldere:
+
+\begin{lstlisting}[language=bash]
+data/left/left_000.bmp
+data/left/left_001.bmp
+data/left/left_002.bmp
+
+data/right/right_000.bmp
+data/right/right_001.bmp
+data/right/right_002.bmp
+\end{lstlisting}
+
+Fiecare imagine din stânga trebuie să aibă perechea corespunzătoare în dreapta. De exemplu, \texttt{left\_000.bmp} trebuie să corespundă cu \texttt{right\_000.bmp}.
+
+\section{Conversia Dataset-ului Brut}
+
+Opțiunea 2 din meniu convertește imagini brute din \texttt{data/raw/boats} în imagini BMP grayscale. Funcția caută mai multe formate posibile, precum:
+
+\begin{itemize}
+    \item \texttt{.ppm};
+    \item \texttt{.jpg};
+    \item \texttt{.jpeg};
+    \item \texttt{.png};
+    \item \texttt{.bmp}.
+\end{itemize}
+
+Pentru dataset-uri de tip multi-view, aplicația folosește un \textit{baseline} de 2 cadre. Astfel, o imagine \texttt{imX} este asociată cu imaginea \texttt{imX+2}. Pentru secvențele de tip \texttt{image0\_X} și \texttt{image1\_X}, imaginile sunt asociate direct după index.
+
+\section{Procesarea unei Singure Perechi Stereo}
+
+Pentru prima pereche stereo, se pot rula următoarele opțiuni:
+
+\begin{itemize}
+    \item opțiunea 3 generează \texttt{anaglyph\_000.bmp};
+    \item opțiunea 4 generează \texttt{depth\_000.bmp};
+    \item opțiunea 5 generează \texttt{anaglyph\_depth\_000.bmp}.
+\end{itemize}
+
+Această etapă este utilă pentru testarea rapidă a algoritmilor pe o singură pereche de imagini.
+
+\section{Procesarea Secvenței Complete}
+
+Opțiunea 6 parcurge toate perechile stereo numerotate consecutiv de la 0 la 999. Pentru fiecare index, aplicația verifică existența fișierelor:
+
+\begin{lstlisting}[language=bash]
+data/left/left_XXX.bmp
+data/right/right_XXX.bmp
+\end{lstlisting}
+
+Dacă una dintre imagini lipsește, procesarea se oprește. Pentru fiecare pereche validă se generează:
+
+\begin{itemize}
+    \item un depth map în \texttt{data/output/depth\_maps};
+    \item un cadru anaglif în \texttt{data/output/frames}.
+\end{itemize}
+
+\section{Generarea Video-ului Final}
+
+Opțiunea 7 citește cadrele anaglife generate anterior și le combină într-un fișier video:
+
+\begin{lstlisting}[language=bash]
+data/output/anaglyph_video.avi
+\end{lstlisting}
+
+Frame rate-ul folosit în implementare este:
+
+\begin{lstlisting}[language=C++]
+int fps = 2;
+\end{lstlisting}
+
+Acest FPS redus este potrivit pentru vizualizarea clară a cadrelor generate și pentru observarea efectului 3D.
+
+%========================
+\chapter{Analiza Performanței și Rezultate}
+%========================
+
+\section{Dataset-uri Utilizate}
+
+Sistemul a fost testat pe secvențe stereo formate din perechi de imagini. În proiect au fost folosite dataset-uri de tip \textit{Cones} și \textit{Boats}.
+
+\begin{itemize}
+    \item \textbf{Cones} este un dataset potrivit pentru testarea disparității pe obiecte apropiate și bine texturate.
+    \item \textbf{Boats} este o secvență mai mare, utilă pentru testarea procesării batch și pentru generarea unui video mai lung.
+\end{itemize}
+
+În cazul dataset-ului \textit{Boats}, aplicația poate genera o secvență mai lungă de cadre, ceea ce demonstrează că pipeline-ul funcționează pentru mai multe perechi stereo consecutive.
+
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}
+        \begin{axis}[
+            ybar,
+            symbolic x coords={Cones, Boats},
+            xtick=data,
+            nodes near coords,
+            nodes near coords align={vertical},
+            ymin=0, ymax=120,
+            ylabel={Număr de cadre},
+            xlabel={Dataset},
+            title={Număr aproximativ de cadre procesate},
+            bar width=2.5cm,
+            enlarge x limits=0.5
+        ]
+        \addplot[fill=cyan!40] coordinates {(Cones,7) (Boats,99)};
+        \end{axis}
+    \end{tikzpicture}
+    \caption{Exemplu de volum de cadre procesate pentru dataset-urile folosite.}
+    \label{fig:dataset_graph}
+\end{figure}
+
+\section{Analiza Complexității}
+
+Algoritmul SAD folosit este o metodă de tip forță brută. Pentru fiecare pixel, se testează mai multe valori posibile ale disparității, iar pentru fiecare valoare se compară două ferestre de dimensiune $W \times W$.
+
+Complexitatea algoritmului este:
+
+\begin{equation}
+    O(N \cdot D \cdot W^2)
+\end{equation}
+
+unde:
+\begin{itemize}
+    \item $N$ este numărul total de pixeli;
+    \item $D$ este disparitatea maximă;
+    \item $W$ este dimensiunea ferestrei.
+\end{itemize}
+
+Această complexitate explică de ce procesarea poate deveni lentă pentru imagini mari sau pentru valori mari ale disparității maxime. Totuși, pentru scop educațional, metoda este potrivită deoarece este clară, ușor de implementat și ușor de explicat.
+
+\section{Rezultate Obținute}
+
+Rezultatele principale ale aplicației sunt:
+
+\begin{itemize}
+    \item hărți de disparitate salvate ca imagini grayscale;
+    \item cadre anaglife roșu-cyan;
+    \item video final în format AVI.
+\end{itemize}
+
+Hărțile de disparitate evidențiază diferențele dintre imaginea stângă și imaginea dreaptă. Zonele în care corespondentul este găsit la o deplasare mai mare apar mai luminoase după normalizare, iar zonele cu deplasare mică apar mai întunecate.
+
+Cadrele anaglife combină informația celor două perspective într-o singură imagine color. Efectul 3D devine vizibil atunci când imaginea sau video-ul sunt privite cu ochelari roșu-cyan.
+
+\section{Limitări}
+
+Implementarea are câteva limitări importante:
+
+\begin{itemize}
+    \item căutarea corespondentului se face doar pe orizontală;
+    \item algoritmul presupune că imaginile sunt aliniate;
+    \item SAD poate da rezultate slabe în zone fără textură;
+    \item marginile imaginii nu primesc întotdeauna valori de disparitate relevante;
+    \item nu se face calibrare stereo reală;
+    \item nu se folosesc optimizări GPU sau paralelizare.
+\end{itemize}
+
+Aceste limitări sunt normale pentru o implementare educațională și pot fi abordate în versiuni viitoare.
+
+%========================
+\chapter{Concluzii, Contribuții și Dezvoltări Ulterioare}
+%========================
+
+\section{Concluzii}
+
+Proiectul demonstrează modul în care pot fi folosite conceptele de procesare stereo pentru a genera imagini și secvențe video anaglife. Aplicația pornește de la perechi de imagini grayscale, calculează hărți de disparitate folosind SAD și generează cadre roșu-cyan care pot fi combinate într-un video final.
+
+Din punct de vedere tehnic, proiectul combină mai multe noțiuni importante din procesarea imaginilor:
+
+\begin{itemize}
+    \item citirea și validarea imaginilor;
+    \item lucrul cu matrice OpenCV;
+    \item compararea ferestrelor de pixeli;
+    \item generarea hărților grayscale;
+    \item manipularea canalelor de culoare BGR;
+    \item scrierea cadrelor într-un fișier video.
+\end{itemize}
+
+Proiectul este organizat modular, ceea ce îl face ușor de înțeles și de extins. Fiecare clasă are o responsabilitate clară, iar fluxul de procesare este împărțit în etape logice.
+
+\section{Contribuțiile Membrilor Echipei}
+
+Abordarea acestui proiect a implicat o împărțire colaborativă a responsabilităților.
+
+\begin{itemize}
+    \item \textbf{Ghineț Ioana-Teodora:} s-a ocupat de partea de arhitectură modulară, încărcare a imaginilor, organizare a datelor de intrare și generare a video-ului final. A contribuit la implementarea claselor \texttt{ImageLoader}, \texttt{AnaglyphGenerator} și \texttt{VideoGenerator}, precum și la integrarea acestora în meniul aplicației.
+    \item \textbf{Murariu Georgiana:} s-a ocupat de partea matematică a proiectului, în special de calculul hărții de disparitate folosind SAD, normalizarea rezultatului și explicarea formulelor teoretice. A contribuit și la documentarea pipeline-ului, a arhitecturii și a limitărilor implementării.
+\end{itemize}
+
+\section{Dezvoltări Ulterioare}
+
+Proiectul poate fi extins în mai multe direcții:
+
+\begin{enumerate}
+    \item \textbf{Optimizarea algoritmului SAD:} se pot folosi imagini integrale sau alte metode pentru reducerea timpului de calcul.
+    \item \textbf{Filtrarea depth map-ului:} se poate aplica un filtru median pentru reducerea zgomotului din harta de disparitate.
+    \item \textbf{Folosirea unor algoritmi stereo avansați:} se pot compara rezultatele cu metode precum \texttt{StereoBM} sau \texttt{StereoSGBM}.
+    \item \textbf{Parametri configurabili:} valorile \texttt{maxDisparity}, \texttt{windowSize}, \texttt{fps} și \texttt{maxShift} pot fi citite de la tastatură sau dintr-un fișier de configurare.
+    \item \textbf{Interfață grafică:} aplicația poate fi extinsă cu o interfață GUI pentru alegerea imaginilor și vizualizarea rezultatelor.
+    \item \textbf{Export video MP4:} dacă sistemul are codecurile necesare, video-ul poate fi exportat și în format MP4.
+    \item \textbf{Calibrare stereo reală:} pentru rezultate mai precise, se poate adăuga calibrarea camerelor și rectificarea imaginilor.
+\end{enumerate}
+
+\printbibliography[title={Referințe Bibliografice}]
+
+\appendix
+\chapter{Anexe: Snippet-uri de Cod Esențiale}
+
+\section{Calculul Hărții de Disparitate}
+
+\begin{lstlisting}[language=C++]
+Mat DisparityMap::computeDisparityMap(const Mat& left,
+                                      const Mat& right,
+                                      int maxDisparity,
+                                      int windowSize)
+{
+    if (left.empty() || right.empty())
+    {
+        cout << "Eroare: imaginile pentru disparity map sunt goale." << endl;
+        return Mat();
+    }
+
+    if (left.size() != right.size())
+    {
+        cout << "Eroare: imaginile pentru disparity map nu au aceeasi dimensiune." << endl;
+        return Mat();
+    }
+
+    if (left.type() != CV_8UC1 || right.type() != CV_8UC1)
+    {
+        cout << "Eroare: imaginile trebuie sa fie grayscale pe 8 biti/pixel." << endl;
+        return Mat();
+    }
+
+    if (windowSize < 3)
+    {
+        windowSize = 3;
+    }
+
+    if (windowSize % 2 == 0)
+    {
+        windowSize++;
+    }
+
+    if (maxDisparity < 1)
+    {
+        maxDisparity = 1;
+    }
+
+    if (maxDisparity > 255)
+    {
+        maxDisparity = 255;
+    }
+
+    int radius = windowSize / 2;
+    Mat disparity(left.rows, left.cols, CV_8UC1, Scalar(0));
+
+    for (int y = radius; y < left.rows - radius; y++)
+    {
+        for (int x = radius; x < left.cols - radius; x++)
+        {
+            int bestDisparity = 0;
+            int bestCost = INT_MAX;
+
+            for (int d = 0; d <= maxDisparity; d++)
+            {
+                if (x - d - radius < 0)
+                {
+                    continue;
+                }
+
+                int cost = 0;
+
+                for (int wy = -radius; wy <= radius; wy++)
+                {
+                    for (int wx = -radius; wx <= radius; wx++)
+                    {
+                        int leftValue = left.at<uchar>(y + wy, x + wx);
+                        int rightValue = right.at<uchar>(y + wy, x + wx - d);
+                        cost += abs(leftValue - rightValue);
+                    }
+                }
+
+                if (cost < bestCost)
+                {
+                    bestCost = cost;
+                    bestDisparity = d;
+                }
+            }
+
+            disparity.at<uchar>(y, x) = static_cast<uchar>(bestDisparity);
+        }
+    }
+
+    return disparity;
+}
+\end{lstlisting}
+
+\section{Normalizarea Hărții de Disparitate}
+
+\begin{lstlisting}[language=C++]
+Mat DisparityMap::normalizeDisparityMap(const Mat& disparity)
+{
+    if (disparity.empty())
+    {
+        cout << "Eroare: disparity map-ul este gol si nu poate fi normalizat." << endl;
+        return Mat();
+    }
+
+    double minValue;
+    double maxValue;
+    minMaxLoc(disparity, &minValue, &maxValue);
+
+    Mat normalized(disparity.rows, disparity.cols, CV_8UC1, Scalar(0));
+
+    if (maxValue <= minValue)
+    {
+        return normalized;
+    }
+
+    for (int y = 0; y < disparity.rows; y++)
+    {
+        for (int x = 0; x < disparity.cols; x++)
+        {
+            int value = disparity.at<uchar>(y, x);
+            int normalizedValue =
+                static_cast<int>((value - minValue) * 255.0 / (maxValue - minValue));
+
+            normalized.at<uchar>(y, x) = static_cast<uchar>(normalizedValue);
+        }
+    }
+
+    return normalized;
+}
+\end{lstlisting}
+
+\section{Generarea Anaglifului Simplu}
+
+\begin{lstlisting}[language=C++]
+Mat AnaglyphGenerator::createSimpleAnaglyph(const Mat& leftImage,
+                                            const Mat& rightImage)
+{
+    Mat anaglyph(leftImage.rows, leftImage.cols, CV_8UC3);
+
+    for (int y = 0; y < leftImage.rows; y++)
+    {
+        for (int x = 0; x < leftImage.cols; x++)
+        {
+            uchar leftPixel = leftImage.at<uchar>(y, x);
+            uchar rightPixel = rightImage.at<uchar>(y, x);
+
+            Vec3b color;
+            color[0] = rightPixel; // B
+            color[1] = rightPixel; // G
+            color[2] = leftPixel;  // R
+
+            anaglyph.at<Vec3b>(y, x) = color;
+        }
+    }
+
+    return anaglyph;
+}
+\end{lstlisting}
+
+\section{Generarea Anaglifului cu Depth Map}
+
+\begin{lstlisting}[language=C++]
+Mat AnaglyphGenerator::createAnaglyphWithDisparity(const Mat& leftImage,
+                                                   const Mat& rightImage,
+                                                   const Mat& disparityMap)
+{
+    Mat anaglyph(leftImage.rows, leftImage.cols, CV_8UC3);
+    int maxShift = 16;
+
+    for (int y = 0; y < leftImage.rows; y++)
+    {
+        for (int x = 0; x < leftImage.cols; x++)
+        {
+            uchar leftPixel = leftImage.at<uchar>(y, x);
+            uchar depthValue = disparityMap.at<uchar>(y, x);
+
+            int shift = depthValue * maxShift / 255;
+            int shiftedX = x - shift;
+
+            uchar rightPixel = 0;
+            if (shiftedX >= 0 && shiftedX < leftImage.cols)
+            {
+                rightPixel = leftImage.at<uchar>(y, shiftedX);
+            }
+
+            Vec3b color;
+            color[0] = rightPixel; // B
+            color[1] = rightPixel; // G
+            color[2] = leftPixel;  // R
+
+            anaglyph.at<Vec3b>(y, x) = color;
+        }
+    }
+
+    return anaglyph;
+}
+\end{lstlisting}
+
+\section{Încărcarea unei Perechi Stereo}
+
+\begin{lstlisting}[language=C++]
+bool ImageLoader::loadStereoPair(const string& leftPath,
+                                 const string& rightPath,
+                                 Mat& leftImage,
+                                 Mat& rightImage)
+{
+    if (!loadGrayscaleImage(leftPath, leftImage))
+    {
+        return false;
+    }
+
+    if (!loadGrayscaleImage(rightPath, rightImage))
+    {
+        return false;
+    }
+
+    if (leftImage.size() != rightImage.size())
+    {
+        cout << "Imaginile stereo nu au aceeasi dimensiune." << endl;
+        cout << "Left: " << leftImage.cols << "x" << leftImage.rows << endl;
+        cout << "Right: " << rightImage.cols << "x" << rightImage.rows << endl;
+        return false;
+    }
+
+    return true;
+}
+\end{lstlisting}
+
+\section{Generarea Video-ului Final}
+
+\begin{lstlisting}[language=C++]
+bool VideoGenerator::createVideoFromFrames(const string& framesFolder,
+                                           const string& outputPath,
+                                           int fps)
+{
+    vector<Mat> frames;
+
+    for (int index = 0; index <= 999; index++)
+    {
+        string framePath = ImageLoader::framePath(framesFolder, "anaglyph", index);
+
+        if (!ImageLoader::fileExists(framePath))
+        {
+            if (index == 0)
+            {
+                cout << "Nu exista primul frame: " << framePath << endl;
+            }
+            break;
+        }
+
+        Mat frame = imread(framePath, IMREAD_COLOR);
+        if (frame.empty())
+        {
+            cout << "Nu pot citi frame-ul: " << framePath << endl;
+            continue;
+        }
+
+        frames.push_back(frame);
+    }
+
+    if (frames.empty())
+    {
+        cout << "Nu exista cadre anaglife cu depth map in: " << framesFolder << endl;
+        return false;
+    }
+
+    Size frameSize(frames[0].cols, frames[0].rows);
+
+    VideoWriter writer(outputPath,
+                       VideoWriter::fourcc('M', 'J', 'P', 'G'),
+                       fps,
+                       frameSize,
+                       true);
+
+    if (!writer.isOpened())
+    {
+        cout << "Nu pot crea video-ul: " << outputPath << endl;
+        return false;
+    }
+
+    for (const Mat& frame : frames)
+    {
+        if (frame.size() != frameSize)
+        {
+            cout << "Frame ignorat deoarece are alta dimensiune." << endl;
+            continue;
+        }
+
+        writer.write(frame);
+    }
+
+    writer.release();
+
+    cout << "Video generat: " << outputPath << endl;
+    cout << "Numar cadre: " << frames.size() << ", FPS: " << fps << endl;
+
+    return true;
+}
+\end{lstlisting}
+
+\section{Meniul Principal al Aplicației}
+
+\begin{lstlisting}[language=C++]
+int main()
+{
+    int option;
+
+    do
+    {
+        cout << "\n===== Project_PI - 3D Anaglyph Video =====\n";
+        cout << "1 - Test OpenCV\n";
+        cout << "2 - Convert raw datasets to BMP grayscale\n";
+        cout << "3 - Generate simple anaglyph\n";
+        cout << "4 - Generate disparity/depth map\n";
+        cout << "5 - Generate anaglyph using depth map\n";
+        cout << "6 - Process full stereo sequence\n";
+        cout << "7 - Generate final video\n";
+        cout << "0 - Exit\n";
+        cout << "Option: ";
+        cin >> option;
+
+        switch (option)
+        {
+            case 1:
+                testOpenCV();
+                break;
+
+            case 2:
+                convertDatasetToBmp(projectPath(), "boats");
+                break;
+
+            case 3:
+                generateSimpleAnaglyphFromFiles();
+                break;
+
+            case 4:
+                DisparityMap::generateDisparityMapFromFiles(projectPath());
+                break;
+
+            case 5:
+                generateAnaglyphUsingDepthMap();
+                break;
+
+            case 6:
+                processFullStereoSequence();
+                break;
+
+            case 7:
+                generateFinalVideo();
+                break;
+
+            case 0:
+                cout << "Exit.\n";
+                break;
+
+            default:
+                cout << "Invalid option.\n";
+                break;
+        }
+
+    } while (option != 0);
+
+    return 0;
+}
+\end{lstlisting}
+
+\end{document}
